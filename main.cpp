@@ -8,14 +8,16 @@ int main(int argc, char* argv[])
     vector<char> filters;
     vector<View> views;
     vector<Filter*> fs;
+    string input_name, output_name;
+    cin >> input_name >> output_name;
     handle_input(argc, argv, filters, views);
+
     for(int i = 0; i < filters.size(); i++)
     {
         switch(filters[i])
         {
             case 'G':
             {
-                cout << "here" << endl;
                 fs.push_back(new GrayScale());
                 break;
             }
@@ -43,15 +45,8 @@ int main(int argc, char* argv[])
                 break;
         }
     }
-    for(int i = 0; i < filters.size(); i++)
-    {
-        cout << filters[i] << " " << views[i].x << " " << views[i].y << " " << views[i].w << " " << views[i].h << endl;
-    }
-    read(bmp, "A6-Sample-Picture.bmp");
-    bmp.data[56][12] = Pixel(255, 0, 0);
-    int a = bmp.data[0][0].red ;
-    //cout << a << " " << bmp.data[0][0].blu << " " << bmp.data[0][0].grn << endl;
-    write(bmp, "test.bmp");
-    handle_image_filter(fs, views, bmp);
+
+    read(bmp, input_name);
+    handle_image_filter(fs, views, bmp, output_name);
     return 0;
 }

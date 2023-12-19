@@ -1,24 +1,11 @@
 #include "filter.hpp"
-
-Bmp Filter::get_bmp() {return bmp;};
+#include <iostream>
 void Filter::set_view(View& view) {this ->view = view;};
-void Filter::set_bmp(const Bmp& bmp) { this -> bmp = bmp;};
-void KernelFilter::set_filter_kernel(const float filter_kernel[3][3]) 
-{
-    for(int i = 0; i < 3; i++) 
-    {
-        for(int j = 0; j < 3; j++) 
-        {
-            this->filter_kernel[i][j] = filter_kernel[i][j];
-        }
-    }
-}
-Pixel KernelFilter::apply_filter(const int& i,const int& j) 
+View Filter::get_view(){return view;};
+Pixel KernelFilter::apply_filter(const int& i,const int& j, const Bmp& bmp) 
 {
     int kernel_size = 3;
-    Bmp original_bmp = get_bmp();
     Pixel result_pixel;
-
     float sum_red = 0.0, sum_green = 0.0, sum_blue = 0.0;
     int count = 0;
     for (int row = -kernel_size / 2; row <= kernel_size / 2; ++row)
@@ -28,14 +15,14 @@ Pixel KernelFilter::apply_filter(const int& i,const int& j)
             int neighbor_row = i + row;
             int neighbor_col = j + col;
 
-            if (neighbor_row >= 0 && neighbor_row < original_bmp.infoHdr.height &&
-                neighbor_col >= 0 && neighbor_col < original_bmp.infoHdr.width)
+            if (neighbor_row >= 0 && neighbor_row < bmp.infoHdr.height &&
+                neighbor_col >= 0 && neighbor_col < bmp.infoHdr.width)
             {
-                Pixel neighborPixel = original_bmp.data[neighbor_row][neighbor_col];
-                float weight = get_matrix()[row + kernel_size / 2][col + kernel_size / 2];
-                sum_red += neighborPixel.red * weight;
-                sum_green += neighborPixel.grn * weight;
-                sum_blue += neighborPixel.blu * weight;
+                Pixel neighbor_pixel = bmp.data[neighbor_row][neighbor_col];
+                float weight = kernel_matrix[row + kernel_size / 2][col + kernel_size / 2];
+                sum_red += neighbor_pixel.red * weight;
+                sum_green += neighbor_pixel.grn * weight;
+                sum_blue += neighbor_pixel.blu * weight;
                 count++;
             }
         }
@@ -58,15 +45,49 @@ Pixel KernelFilter::apply_filter(const int& i,const int& j)
 
     return result_pixel;
 }
-Blur::Blur() : KernelFilter() {set_filter_kernel(kernel_matrix);}
-Sharpen::Sharpen() : KernelFilter() {set_filter_kernel(kernel_matrix);}
-Emboss::Emboss() : KernelFilter() {set_filter_kernel(kernel_matrix);}
-Pixel GrayScale::apply_filter(const int& i, const int& j)
+KernelFilter::KernelFilter() : Filter(){};
+NoKernel::NoKernel() : Filter(){};
+Blur::Blur() : KernelFilter() 
 {
-    Pixel pixel;
-    if (i >= 0 && i < get_bmp().infoHdr.height && j >= 0 && j < get_bmp().infoHdr.width)
-    {
-        pixel = get_bmp().data[i][j];
+    kernel_matrix[0][0] = 1.0/16;
+    kernel_matrix[0][1] = 2.0/16;
+    kernel_matrix[0][2] = 1.0/16;
+    kernel_matrix[1][0] = 2.0/16;
+    kernel_matrix[1][1] = 4.0/16;
+    kernel_matrix[1][2] = 2.0/16;
+    kernel_matrix[2][0] = 1.0/16;
+    kernel_matrix[2][1] = 2.0/16;
+    kernel_matrix[2][2] = 1.0/16; 
+}
+Sharpen::Sharpen() : KernelFilter() 
+{
+    kernel_matrix[0][0] = 0;
+    kernel_matrix[0][1] = -1;
+    kernel_matrix[0][2] = 0;
+    kernel_matrix[1][0] = -1;
+    kernel_matrix[1][1] = 5;
+    kernel_matrix[1][2] = -1;
+    kernel_matrix[2][0] = 0;
+    kernel_matrix[2][1] = -1;
+    kernel_matrix[2][2] = 0; 
+}
+Emboss::Emboss() : KernelFilter() 
+{ 
+    kernel_matrix[0][0] = -2;
+    kernel_matrix[0][1] = -1;
+    kernel_matrix[0][2] = 0;
+    kernel_matrix[1][0] = -1;
+    kernel_matrix[1][1] = 1;
+    kernel_matrix[1][2] = 1;
+    kernel_matrix[2][0] = 0;
+    kernel_matrix[2][1] = 1;
+    kernel_matrix[2][2] = 2; 
+}
+GrayScale::GrayScale() : NoKernel(){};
+Invert::Invert() : NoKernel(){};
+Pixel GrayScale::apply_filter(const int& i, const int& j,const  Bmp& bmp)
+{
+    Pixel pixel = bmp.data[i][j];
         int average = (pixel.blu + pixel.red + pixel.grn) / 3;
         if (average > 255)
             average = 255;
@@ -75,14 +96,13 @@ Pixel GrayScale::apply_filter(const int& i, const int& j)
         pixel.red = average;
         pixel.grn = average;
         pixel.blu = average;
-    }
     return pixel;
 }
-Pixel Invert::apply_filter(const int& i,const int& j)
+
+Pixel Invert::apply_filter(const int& i, const int& j, const Bmp& bmp)
 {
-    Pixel& pixel = get_bmp().data[i][j];
     Pixel result;
-    
+    Pixel pixel = bmp.data[i][j];
     int green = 255 - pixel.grn;
     int red = 255 - pixel.red;
     int blue = 255 - pixel.blu;

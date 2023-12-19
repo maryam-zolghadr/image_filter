@@ -1,10 +1,10 @@
 #include "apply_filter.hpp"
 
-void handle_image_filter(vector<Filter*>& fs, vector<View>& views, Bmp& bmp)
+void handle_image_filter(vector<Filter*>& fs, vector<View>& views, Bmp& bmp, const string& output_name)
 {
+    Bmp tmp_bmp = bmp;
     for (int i = 0; i < fs.size(); i++) 
     {
-        fs[i]->set_bmp(bmp);
         fs[i]->set_view(views[i]);
         const View& view = fs[i]->get_view();
         int startRow = view.x;
@@ -23,11 +23,12 @@ void handle_image_filter(vector<Filter*>& fs, vector<View>& views, Bmp& bmp)
         {
             for (int col = startCol; col < endCol; col++) 
             {
-                Pixel pixel_tmp = fs[i]->apply_filter(row, col);
-                bmp.data[row][col] = pixel_tmp;
+                Pixel pixel_tmp = fs[i]->apply_filter(row, col, bmp);
+                tmp_bmp.data[row][col] = pixel_tmp;
             }
         }
+        bmp = tmp_bmp;
     }
-    write(bmp, "test.bmp");
-    delete bmp.fileData;
+    write(tmp_bmp, output_name);
+    delete tmp_bmp.fileData;
 }

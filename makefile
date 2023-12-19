@@ -10,6 +10,9 @@ all: $(SOURCES) $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
 
+read_input.o: read_input.cpp read_input.hpp
+	$(CC) $(CFLAGS) read_input.cpp
+	
 main.o: main.cpp
 	$(CC) $(CFLAGS) main.cpp
 
@@ -21,9 +24,6 @@ bmp.o: bmp.cpp bmp.hpp
 
 filter.o: filter.cpp filter.hpp
 	$(CC) $(CFLAGS) filter.cpp
-
-read_input.o: read_input.cpp read_input.hpp
-	$(CC) $(CFLAGS) read_input.cpp
 
 clean:
 	rm -rf *o $(EXECUTABLE)
